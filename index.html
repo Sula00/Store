@@ -15,44 +15,44 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
-      margin-top: auto;           /* толкает блок вниз карточки */
-      padding-top: 1.25rem;       /* отступ сверху от описания */
+      gap: 1.25rem;               /* хороший отступ между ценой и кнопкой */
+      margin-top: auto;
+      padding: 1.25rem 1.5rem 1.5rem;
+    }
+
+    .price {
+      font-weight: bold;
+      color: #4ade80;             /* зелёный для цены */
+      white-space: nowrap;        /* ← главное: не переносить цену */
+      flex-shrink: 0;             /* цена не сжимается */
     }
 
     .add-to-cart {
       padding: 0.625rem 1.25rem;
       font-size: 0.95rem;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
-    /* Мобильная версия */
+    /* Мобильные */
     @media (max-width: 640px) {
       #products { grid-template-columns: 1fr; gap: 1.25rem; }
       .product-card {
         display: flex;
         flex-direction: column;
-        min-height: 420px;           /* примерно одинаковая высота карточек */
+        min-height: 420px;
       }
       .bottom-row {
         gap: 0.75rem;
-        padding: 1rem 1rem 1.25rem;  /* отступы от краёв карточки */
+        padding: 1rem 1rem 1.25rem;
       }
-      .price {
-        font-size: 1.4rem;
-      }
-      .add-to-cart {
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-      }
+      .price { font-size: 1.4rem; }
+      .add-to-cart { padding: 0.5rem 1rem; font-size: 0.9rem; }
     }
 
-    /* Десктоп / планшет */
+    /* Ноутбуки / десктоп */
     @media (min-width: 641px) {
-      #products { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
-      .bottom-row {
-        padding: 1.25rem 1.5rem 1.5rem;  /* отступы от краёв карточки */
-      }
+      #products { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; }
       .price { font-size: 1.75rem; }
       .add-to-cart { font-size: 1rem; padding: 0.75rem 1.5rem; }
     }
@@ -85,7 +85,7 @@
       <div id="products" class="grid"></div>
     </div>
 
-    <!-- Корзина модалка (без изменений) -->
+    <!-- Корзина модалка -->
     <div id="cart-modal" class="hidden fixed inset-0 bg-black/85 z-50 flex items-end">
       <div class="bg-[#1A1A1A] w-full rounded-t-3xl max-h-[88vh] overflow-y-auto">
         <div class="p-6 border-b border-gray-700 flex justify-between items-center sticky top-0 bg-[#1A1A1A] z-10">
@@ -145,7 +145,7 @@
               ${product.desc}
             </div>
             <div class="bottom-row">
-              <div class="price font-bold text-green-400">
+              <div class="price text-2xl lg:text-3xl">
                 ${product.price.toLocaleString('ru-RU')} ₸
               </div>
               <button onclick="addToCart(${product.id}); event.stopPropagation()" 
@@ -163,8 +163,6 @@
         container.appendChild(card);
       });
     }
-
-    // остальные функции без изменений (addToCart, updateCartCount, toggleCart, renderCart, changeQuantity, removeFromCart, placeOrder)
 
     function addToCart(id) {
       const product = products.find(p => p.id === id);
