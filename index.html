@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Demo Store — Мини-магазин в Telegram</title>
+  <title>MyStore KZ — Мини-магазин в Telegram</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -15,16 +15,16 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1.25rem;               /* хороший отступ между ценой и кнопкой */
+      gap: 1.25rem;
       margin-top: auto;
       padding: 1.25rem 1.5rem 1.5rem;
     }
 
     .price {
       font-weight: bold;
-      color: #4ade80;             /* зелёный для цены */
-      white-space: nowrap;        /* ← главное: не переносить цену */
-      flex-shrink: 0;             /* цена не сжимается */
+      color: #4ade80;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .add-to-cart {
@@ -50,7 +50,7 @@
       .add-to-cart { padding: 0.5rem 1rem; font-size: 0.9rem; }
     }
 
-    /* Ноутбуки / десктоп */
+    /* Ноутбук и десктоп */
     @media (min-width: 641px) {
       #products { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; }
       .price { font-size: 1.75rem; }
@@ -81,7 +81,6 @@
     <!-- Продукты -->
     <div>
       <h1 class="text-3xl font-bold mb-8 text-center">Выбери товар и закажи!</h1>
-      
       <div id="products" class="grid"></div>
     </div>
 
@@ -105,7 +104,7 @@
             ✅ Оплатить через Kaspi (QR)
           </button>
           <div class="text-center text-sm text-gray-500 mt-4">
-            После оплаты заказ придёт в этот чат
+            После оплаты напиши в чат: "оплатил #XXXXXX"
           </div>
         </div>
       </div>
@@ -234,19 +233,40 @@
       updateCartCount();
     }
 
+    // ==================== КАСПИ QR (без AiPay) ====================
     function placeOrder() {
-      if (cart.length === 0) return tg.showAlert('Корзина пуста!');
-      const total = cart.reduce((s, i) => s + i.price * (i.quantity || 1), 0);
-      const id = Date.now();
+      if (cart.length === 0) {
+        tg.showAlert('Корзина пуста!');
+        return;
+      }
+
+      const total = cart.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
+      const orderId = Date.now().toString().slice(-6);
+      const orderItems = cart.map(item => `${item.name} ×${item.quantity || 1}`).join('\n');
+
+      const qrData = `KASPI PAY\nСумма: ${total.toLocaleString('ru-RU')} ₸\nЗаказ: #${orderId}\nМагазин: MyStore KZ\nКлиент: ${tg.initDataUnsafe?.user?.username || 'аноним'}`;
+
       tg.showPopup({
-        title: 'Оплатить через Kaspi',
-        message: `Сумма: ${total.toLocaleString('ru-RU')} ₸\nЗаказ #${id}\n\nНажми "Показать QR"`,
-        buttons: [{id:'pay', type:'default', text:'Показать QR'}, {type:'cancel'}]
-      }, btn => {
-        if (btn === 'pay') {
-          const data = `KASPI;${total};${tg.initDataUnsafe?.user?.username || 'test'};${id}`;
-          tg.openLink(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data)}`);
-          tg.showAlert(`Заказ #${id} создан!\nОплати по QR → напиши после оплаты`);
+        title: 'Оплатить заказ',
+        message: `Сумма: ${total.toLocaleString('ru-RU')} ₸\n\nЗаказ #${orderId}\nТовары:\n${orderItems}\n\nСканируй QR в Kaspi`,
+        buttons: [
+          {id: 'show_qr', type: 'default', text: 'Показать QR'},
+          {type: 'cancel', text: 'Отмена'}
+        ]
+      }, (buttonId) => {
+        if (buttonId === 'show_qr') {
+          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(qrData)}&color=000000&bgcolor=FFFFFF`;
+
+          tg.showPopup({
+            title: 'Kaspi QR',
+            message: 'Открой Kaspi → "Сканировать" → наведи на QR\nПосле оплаты напиши в чат: "оплатил #' + orderId + '"',
+            buttons: [{type: 'ok'}]
+          });
+
+          tg.openLink(qrUrl);
+
+          tg.showAlert(`✅ Заказ #${orderId} создан!\nСумма: ${total.toLocaleString('ru-RU')} ₸\n\nОплати по QR → после оплаты напиши мне "оплатил #${orderId}" — я подтвержу и отправлю товар.`);
+
           cart = [];
           updateCartCount();
           toggleCart();
